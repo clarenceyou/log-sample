@@ -1,0 +1,18 @@
+{
+	"ImportPath": "github.com/clarenceyou/log-sample",
+	"GoVersion": "go1.8",
+	"GodepVersion": "v79",
+	"Packages": [
+		"./..."
+	],
+	"Deps": [
+		{
+			"ImportPath": "github.com/hashicorp/logutils",
+			"Rev": "0dc08b1671f34c4250ce212759ebd880f743d883"
+		},
+		{
+			"ImportPath": "github.com/yougroupteam/go-toolbox/util/logutil",
+			"Rev": "d0bb11633ef5274765b103f8099634386b5873bf"
+		}
+	]
+}

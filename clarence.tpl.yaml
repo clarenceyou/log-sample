@@ -1,0 +1,125 @@
+kind: "Template"
+apiVersion: "v1"
+metadata:
+  name: clarence-app
+objects:
+  - kind: ImageStream
+    apiVersion: v1
+    metadata:
+      name: logstash
+    spec:      
+      tags:
+      - name: latest
+        from:
+          kind: DockerImage
+          name: docker.elastic.co/logstash/logstash:5.5.1
+        importPolicy:
+          scheduled: true
+  - kind: DeploymentConfig
+    apiVersion: v1
+    metadata:
+      labels:
+        app: logstash
+      name: logstash
+    spec:
+      strategy:
+        type: Recreate
+      triggers:
+        - type: ConfigChange
+        - type: ImageChange
+          imageChangeParams:
+            automatic: true
+            containerNames:
+            - logstash
+            from:
+              kind: ImageStreamTag
+              name: logstash:latest
+      replicas: 1
+      template:
+        metadata:
+          labels:
+            app: logstash
+        spec:
+          containers:
+          - name: logstash
+            image: logstash
+  - apiVersion: v1
+    kind: ImageStream
+    metadata:
+      name: gotest
+    spec:
+      tags:
+      - annotations:
+          openshift.io/imported-from: golang
+        from:
+          kind: DockerImage
+          name: golang
+        generation: null
+        importPolicy: {}
+        name: from
+    status:
+      dockerImageRepository: ""
+  - apiVersion: v1
+    kind: BuildConfig
+    metadata:
+      name: gotest
+    spec:
+      nodeSelector: null
+      output:
+        to:
+          kind: ImageStreamTag
+          name: gotest:latest
+      postCommit: {}
+      resources: {}
+      source:
+        git:
+          ref: master
+          uri: https://github.com/clarenceyou/go-test.git
+        type: Git
+        sourceSecret:
+          name: "sshsecret"
+      strategy:
+        dockerStrategy:
+          from:
+            kind: ImageStreamTag
+            name: gotest:from
+        type: Docker
+      triggers:
+      - type: ConfigChange
+      - imageChange: {}
+        type: ImageChange
+    status:
+      lastVersion: 0
+  - apiVersion: v1
+    kind: DeploymentConfig
+    metadata:
+      name: gotest
+    spec:
+      replicas: 1
+      selector:
+        deploymentconfig: gotest
+      strategy:
+        resources: {}
+      template:
+        metadata:
+          labels:
+            deploymentconfig: gotest
+        spec:
+          containers:
+          - args:
+            image: gotest
+            name: gotest
+            resources: {}
+      test: false
+      triggers:
+      - type: ConfigChange
+      - imageChangeParams:
+          automatic: true
+          containerNames:
+          - gotest
+          from:
+            kind: ImageStreamTag
+            name: gotest:latest
+        type: ImageChange
+    status: {}
+

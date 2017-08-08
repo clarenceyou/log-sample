@@ -1,0 +1,85 @@
+kind: "Template"
+apiVersion: "v1"
+metadata:
+  name: log-sample
+objects:
+  - apiVersion: v1
+    kind: ImageStream
+    metadata:
+      name: log-sample
+    spec:
+      tags:
+      - annotations:
+          openshift.io/imported-from: golang
+        from:
+          kind: DockerImage
+          name: golang
+        generation: null
+        importPolicy: {}
+        name: from
+    status:
+      dockerImageRepository: ""
+  - apiVersion: v1
+    kind: BuildConfig
+    metadata:
+      name: log-sample
+    spec:
+      nodeSelector: null
+      output:
+        to:
+          kind: ImageStreamTag
+          name: log-sample:latest
+      postCommit: {}
+      resources: {}
+      source:
+        git:
+          ref: master
+          uri: https://github.com/clarenceyou/log-sample.git
+        type: Git
+        sourceSecret:
+          name: "sshsecret"
+      strategy:
+        dockerStrategy:
+          from:
+            kind: ImageStreamTag
+            name: log-sample:from
+        type: Docker
+      triggers:
+      - type: ConfigChange
+      - imageChange: {}
+        type: ImageChange
+    status:
+      lastVersion: 0
+  - apiVersion: v1
+    kind: DeploymentConfig
+    metadata:
+      name: log-sample
+    spec:
+      replicas: 1
+      selector:
+        deploymentconfig: log-sample
+      strategy:
+        resources: {}
+      template:
+        metadata:
+          labels:
+            deploymentconfig: log-sample
+        spec:
+          containers:
+          - args:
+            image: log-sample
+            name: log-sample
+            resources: {}
+      test: false
+      triggers:
+      - type: ConfigChange
+      - imageChangeParams:
+          automatic: true
+          containerNames:
+          - log-sample
+          from:
+            kind: ImageStreamTag
+            name: log-sample:latest
+        type: ImageChange
+    status: {}
+
